@@ -10,9 +10,9 @@ public class FreeCamera : MonoBehaviour
     //  Mouse - turn camera
 
     [SerializeField] float maxSpeed = 10.0f;
-    [SerializeField] float acceleration = 1.0f;
+    [SerializeField] float acceleration = 5.0f;
 
-    [SerializeField] float breakingForce = 1.0f;    //  Gradual slowdown 
+    [SerializeField] float brakingForce = 3f;    //  Gradual slowdown 
 
     Vector3 speed;
 
@@ -33,6 +33,8 @@ public class FreeCamera : MonoBehaviour
 
         if (speed.magnitude > maxSpeed) //  Limiting the speed
             speed = speed.normalized * maxSpeed;
+
+        speed -= speed.normalized * brakingForce * Time.deltaTime;  //  Slowing down with time
 
         this.transform.position += speed * Time.deltaTime;
     }
