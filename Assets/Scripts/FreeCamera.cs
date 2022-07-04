@@ -18,7 +18,7 @@ public class FreeCamera : MonoBehaviour
 
     private void Start()
     {
-        speed = new Vector3();
+        speed = new Vector3(0.0f, 0.0f, 0.0f);
     }
 
     void Update()
@@ -27,8 +27,11 @@ public class FreeCamera : MonoBehaviour
         float y = Input.GetAxis("Vertical");
         float z = Input.GetAxis("Forward");
 
-        speed = transform.right * x + transform.up * y + transform.forward * z; //  Calculating horizontal movement
+        speed +=    transform.right * x * acceleration * Time.deltaTime + 
+                    transform.up * y * acceleration * Time.deltaTime + 
+                    transform.forward * z * acceleration * Time.deltaTime; //  Calculating horizontal movement
 
+        
 
         this.transform.position += speed * Time.deltaTime;
     }
