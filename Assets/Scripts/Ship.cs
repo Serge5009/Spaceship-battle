@@ -79,6 +79,7 @@ public class Ship : MonoBehaviour
     {
         GameObject proj = Instantiate(projectilePrefab, transform.position, Quaternion.identity);
         Projectile p = proj.GetComponent<Projectile>();
-        p.SetSpeed(aimDirection);
+        Vector3 shootVec = aimDirection.normalized * p.speed + velocity;    //  Applying speed and adding momentum
+        p.SetSpeed(shootVec);
     }
 }

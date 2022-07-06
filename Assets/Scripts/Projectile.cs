@@ -4,7 +4,13 @@ using UnityEngine;
 
 public class Projectile : MonoBehaviour
 {
+    //  Stats
+    [SerializeField] float damage = 5.0f;
+    public float speed = 20.0f;
+    [SerializeField] float lifespan = 5.0f;    //  In seconds
+
     Vector3 velocity;
+
 
     void Start()
     {
@@ -14,6 +20,9 @@ public class Projectile : MonoBehaviour
     void Update()
     {
         transform.position += velocity * Time.deltaTime;
+        lifespan -= Time.deltaTime;
+        if (lifespan <= 0)
+            Destroy(gameObject);
     }
 
     public void SetSpeed(Vector3 newSpeed)
