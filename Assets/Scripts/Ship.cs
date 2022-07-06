@@ -11,9 +11,13 @@ public class Ship : MonoBehaviour
     Vector3 aimDirection;
     float shotingCountdown;
 
-    //  Placeholders:
-    public float hp;
-    public float damage;
+    //  Movement
+    public float acceleration = 2.0f;
+    public float maxSpeed = 20.0f;
+    [HideInInspector] public Vector3 velocity;
+
+    //  Stats
+    public float health = 500.0f;
 
     void Start()
     {
@@ -32,11 +36,13 @@ public class Ship : MonoBehaviour
 
 
 
-    //public float speed;
-    Vector3 velocity;
     void Movement()
     {
-        velocity += new Vector3(Random.Range(-1.0f, 1.0f), Random.Range(-1.0f, 1.0f), Random.Range(-1.0f, 1.0f)) * Time.deltaTime;
+        velocity += new Vector3(Random.Range(-acceleration, acceleration), Random.Range(-acceleration, acceleration), Random.Range(-acceleration, acceleration)) * Time.deltaTime;
+        
+        if (velocity.magnitude > maxSpeed)  //  Limiting speed
+            velocity = velocity.normalized * maxSpeed;
+
         transform.position += velocity * Time.deltaTime;
     }
 
@@ -81,5 +87,25 @@ public class Ship : MonoBehaviour
         Projectile p = proj.GetComponent<Projectile>();
         Vector3 shootVec = aimDirection.normalized * p.speed + velocity;    //  Applying speed and adding momentum
         p.SetSpeed(shootVec);
+    }
+
+    public void GetDamage(float dmg)
+    {
+        health -= dmg;
+
+        //Debug.Log("Damaged");
+
+        if(health <= 0)
+        {
+            Die();
+        }
+    }
+
+    void Die()
+    {
+        GameManager.gameManager.teams[teamID].ships.Remove(this);
+        //Debug.Log("Ship destroyed");
+
+        Destroy(gameObject);
     }
 }

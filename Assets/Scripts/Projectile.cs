@@ -5,16 +5,17 @@ using UnityEngine;
 public class Projectile : MonoBehaviour
 {
     //  Stats
-    [SerializeField] float damage = 5.0f;
-    public float speed = 20.0f;
-    [SerializeField] float lifespan = 5.0f;    //  In seconds
+    [SerializeField] float damage = 5.0f;   
+    public float speed = 20.0f;             //  Speed is grabbed by ship when spawning the bullet and not used anymore
+    [SerializeField] float lifespan = 5.0f; //  In seconds
+    float originalLifespan;
 
     Vector3 velocity;
 
 
     void Start()
     {
-
+        originalLifespan = lifespan;
     }
 
     void Update()
@@ -30,9 +31,24 @@ public class Projectile : MonoBehaviour
         velocity = newSpeed;
     }
 
-    private void OnCollisionEnter(Collision collision)
+    
+    private void OnTriggerEnter(Collider other)
     {
-        Debug.Log("Projectile collision");
+        if (originalLifespan - lifespan <= 0.2f)    //  preventing early collision
+            return;
+
+ 
+        try
+        {
+            Ship target = other.gameObject.GetComponent<Ship>();
+
+            target.GetDamage(damage);
+        }
+        catch
+        {
+            Debug.LogWarning("Bulled failed to find a target");
+        }
+
         Destroy(gameObject);
     }
 }
