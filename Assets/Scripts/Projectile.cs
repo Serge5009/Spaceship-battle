@@ -8,7 +8,7 @@ public class Projectile : MonoBehaviour
 
     void Start()
     {
-        velocity = new Vector3(0.0f, 0.0f, 0.0f);
+
     }
 
     void Update()

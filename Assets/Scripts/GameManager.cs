@@ -20,7 +20,7 @@ public class GameManager : MonoBehaviour
     }
 
 
-    int numTeams;
+    public int numTeams;
     public List<Team> teams;
 
 
