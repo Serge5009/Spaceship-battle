@@ -5,6 +5,7 @@ using UnityEngine;
 public class Ship : MonoBehaviour
 {
     public int teamID;
+    Team allies;
 
     public GameObject projectilePrefab;
     [SerializeField] float fireRate = 1.0f; //  Seconds between each shot
@@ -18,10 +19,13 @@ public class Ship : MonoBehaviour
 
     //  Stats
     public float health = 500.0f;
+    bool isAlive = true;
 
     void Start()
     {
-        GameManager.gameManager.teams[teamID].ships.Add(this);  //  Assigns this ship to specified team
+        allies = GameManager.gameManager.teams[teamID];
+        allies.ships.Add(this);  //  Assigns this ship to specified team
+        allies.numShips++;
 
         velocity = new Vector3(0.0f, 0.0f, 0.0f);
 
@@ -95,7 +99,7 @@ public class Ship : MonoBehaviour
 
         //Debug.Log("Damaged");
 
-        if(health <= 0)
+        if(health <= 0 && isAlive)
         {
             Die();
         }
@@ -103,8 +107,10 @@ public class Ship : MonoBehaviour
 
     void Die()
     {
-        GameManager.gameManager.teams[teamID].ships.Remove(this);
+        allies.ships.Remove(this);
         //Debug.Log("Ship destroyed");
+        allies.numShips--;
+        isAlive = false;
 
         Destroy(gameObject);
     }

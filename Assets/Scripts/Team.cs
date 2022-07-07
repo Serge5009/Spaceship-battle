@@ -6,8 +6,9 @@ public class Team : MonoBehaviour
 {
     public int teamID = -1;
 
-    int numShips;
+    [HideInInspector] public int numShips;
     public List<Ship> ships;
+    bool isTeamActive = true;
 
     private void Awake()
     {
@@ -31,6 +32,11 @@ public class Team : MonoBehaviour
 
     void Update()
     {
-        
+        if(numShips <= 0 && isTeamActive)
+        {
+            Debug.Log("Team " + teamID + " is out");
+            GameManager.gameManager.OnTeamLost();
+            isTeamActive = false;
+        }
     }
 }

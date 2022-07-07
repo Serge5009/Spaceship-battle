@@ -26,15 +26,30 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
-        Debug.Log("There are " + teams.Count + " teams");
         numTeams = teams.Count;
+        Debug.Log("There are " + numTeams + " teams");
     }
 
     void Update()
-    {
+    { 
         if(numTeams == 1)
         {
             Debug.Log("Game ended");
+
+            int winID = 0;
+            foreach(Team t in teams)
+            {
+                if (t.numShips > 0)
+                {
+                    Debug.Log("Team " + winID + " is a winner!");
+                }
+                winID++;
+            }
         }
+    }
+
+    public void OnTeamLost()
+    {
+        numTeams--;
     }
 }
