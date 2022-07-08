@@ -13,8 +13,13 @@ public class Ship : MonoBehaviour
     float shotingCountdown;
     Vector3 aimDirection;
 
-    //  Enemy
+    //  Behavior
     GameObject target;
+    float distanceToTarget;
+
+    [SerializeField] float preferredDistance = 20.0f;
+    float baseInitial = 0.0f;
+    float preferredGap = 5.0f;
 
     //  Movement
     public float acceleration = 2.0f;
@@ -23,6 +28,7 @@ public class Ship : MonoBehaviour
 
     //  Stats
     public float health = 500.0f;
+    float healthInnitial = 0.0f;
     bool isAlive = true;
 
     void Start()
@@ -33,6 +39,9 @@ public class Ship : MonoBehaviour
         this.gameObject.transform.SetParent(allies.transform);  //  Set the ship as team's child
 
         //  TO DO       add new team automatically when there's none
+
+        healthInnitial = health;
+        baseInitial = preferredDistance;
 
         velocity = new Vector3(0.0f, 0.0f, 0.0f);
 
@@ -54,10 +63,13 @@ public class Ship : MonoBehaviour
             Debug.LogWarning("Ship scipped an update due to an unknown bug");
         }
 
+        
+
         targetUpdateTimer += Time.deltaTime;
-        if(targetUpdateTimer >= 0.0f)
+        if(targetUpdateTimer >= 1.0f)
         {
             FindTarget();
+            FindPrefferedDistance();
             targetUpdateTimer = 0.0f;
         }
     }
@@ -67,13 +79,24 @@ public class Ship : MonoBehaviour
     void Movement()
     {
         //Wander();
-
-        if (health > 100)
+        if(distanceToTarget > preferredDistance + preferredGap)
+        {
             MoveTowards(target);
-        else
+        }
+        else if (distanceToTarget < preferredDistance - preferredGap)
+        {
             MoveFrom(target);
+        }
+        else
+        {
+            Wander();
+        }
 
-        if (velocity.magnitude > maxSpeed)  //  Limiting speed
+        velocity -= velocity / 60 * Time.deltaTime;                 //  Ships slow down like there's air friction (I know there's no air in space)
+
+        velocity -= transform.position / 60.0f * Time.deltaTime;    //  All ships are slightly attracted to the world center
+
+        if (velocity.magnitude > maxSpeed)                          //  Limiting speed
             velocity = velocity.normalized * maxSpeed;
 
         transform.position += velocity * Time.deltaTime;
@@ -101,7 +124,13 @@ public class Ship : MonoBehaviour
         velocity += dir.normalized * acceleration * Time.deltaTime;
     }
 
+    void FindPrefferedDistance()
+    {
+        preferredDistance = baseInitial + (healthInnitial - health) * 0.1f;    //  Ship will try to stay further if looses hp
 
+        baseInitial -= 0.1f;    //  The function is called once every second
+                                //  this means that ships will tend to get closer with time (1m / 10sec)
+    }
 
     void Shooting()
     {
@@ -135,6 +164,9 @@ public class Ship : MonoBehaviour
                 }
             }
         }
+
+        distanceToTarget = Vector3.Distance(transform.position, target.transform.position);
+
         if (!target)
             Debug.LogWarning("Ship couldn't find a target");
     }
