@@ -23,6 +23,8 @@ public class GameManager : MonoBehaviour
     public int numTeams;
     public List<Team> teams;
 
+    bool isBattle = true;
+
 
     void Start()
     {
@@ -32,9 +34,10 @@ public class GameManager : MonoBehaviour
 
     void Update()
     { 
-        if(numTeams == 1)
+        if(numTeams == 1 && isBattle)
         {
             Debug.Log("Game ended");
+            isBattle = false;
 
             int winID = 0;
             foreach(Team t in teams)

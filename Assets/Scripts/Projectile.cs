@@ -44,8 +44,8 @@ public class Projectile : MonoBehaviour
 
             target.GetDamage(damage);
         }
-        catch
-        {
+        catch   //  Happens when bullet is trying to deal damage to destroyed object
+        {       //  Probably needs fixing           :/
             Debug.LogWarning("Bulled failed to find a target");
         }
 

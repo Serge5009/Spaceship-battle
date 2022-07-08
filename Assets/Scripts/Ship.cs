@@ -7,10 +7,14 @@ public class Ship : MonoBehaviour
     public int teamID;
     Team allies;
 
+    //  Shooting
     public GameObject projectilePrefab;
     [SerializeField] float fireRate = 1.0f; //  Seconds between each shot
-    Vector3 aimDirection;
     float shotingCountdown;
+    Vector3 aimDirection;
+
+    //  Enemy
+    GameObject target;
 
     //  Movement
     public float acceleration = 2.0f;
@@ -23,32 +27,80 @@ public class Ship : MonoBehaviour
 
     void Start()
     {
-        allies = GameManager.gameManager.teams[teamID];
-        allies.ships.Add(this);  //  Assigns this ship to specified team
-        allies.numShips++;
+        allies = GameManager.gameManager.teams[teamID];         //  Remember your team
+        allies.ships.Add(this);                                 //  Assigns this ship to specified team
+        allies.numShips++;                                      //  Increase counter for the team
+        this.gameObject.transform.SetParent(allies.transform);  //  Set the ship as team's child
+
+        //  TO DO       add new team automatically when there's none
 
         velocity = new Vector3(0.0f, 0.0f, 0.0f);
 
         shotingCountdown = fireRate;
+
+        FindTarget();
     }
 
+    float targetUpdateTimer = 0.0f;
     void Update()
     {
-        Movement();
-        Shooting();
+        try
+        {
+            Movement();
+            Shooting();
+        }
+        catch   //  Needed cuz sometimes ship fail to find a target on the first frame
+        {
+            Debug.LogWarning("Ship scipped an update due to an unknown bug");
+        }
+
+        targetUpdateTimer += Time.deltaTime;
+        if(targetUpdateTimer >= 0.0f)
+        {
+            FindTarget();
+            targetUpdateTimer = 0.0f;
+        }
     }
 
 
 
     void Movement()
     {
-        velocity += new Vector3(Random.Range(-acceleration, acceleration), Random.Range(-acceleration, acceleration), Random.Range(-acceleration, acceleration)) * Time.deltaTime;
-        
+        //Wander();
+
+        if (health > 100)
+            MoveTowards(target);
+        else
+            MoveFrom(target);
+
         if (velocity.magnitude > maxSpeed)  //  Limiting speed
             velocity = velocity.normalized * maxSpeed;
 
         transform.position += velocity * Time.deltaTime;
     }
+
+    void Wander()
+    {
+        velocity += new Vector3(Random.Range(-acceleration, acceleration), Random.Range(-acceleration, acceleration), Random.Range(-acceleration, acceleration)) * Time.deltaTime;
+
+
+
+    }
+
+    void MoveTowards(GameObject targ)
+    {
+        Vector3 dir = targ.transform.position - transform.position;
+
+        velocity += dir.normalized * acceleration * Time.deltaTime;
+    }
+
+    void MoveFrom(GameObject targ)
+    {
+        Vector3 dir = - targ.transform.position + transform.position;
+
+        velocity += dir.normalized * acceleration * Time.deltaTime;
+    }
+
 
 
     void Shooting()
@@ -58,7 +110,7 @@ public class Ship : MonoBehaviour
         if(shotingCountdown <= 0 && GameManager.gameManager.numTeams > 1)   //  Will only shoot when reloaded and has an enemy
         {
             shotingCountdown = fireRate;
-            FindTarget();
+            AimAtTarget();
             if (aimDirection == Vector3.zero)
                 Debug.LogWarning("Aiming vector resulted to 0, 0, 0");
             Shoot();
@@ -79,10 +131,17 @@ public class Ship : MonoBehaviour
                 if (dist < minDist)
                 {
                     minDist = dist;
-                    aimDirection = s.transform.position - transform.position;
+                    target = s.gameObject;
                 }
             }
         }
+        if (!target)
+            Debug.LogWarning("Ship couldn't find a target");
+    }
+
+    void AimAtTarget()
+    {
+        aimDirection = target.transform.position - transform.position;
     }
 
     void Shoot()
