@@ -16,6 +16,7 @@ public class Ship : MonoBehaviour
     //  Behavior
     GameObject target;
     float distanceToTarget;
+    [SerializeField] bool aimWithPrediction = true;
 
     [SerializeField] float preferredDistance = 20.0f;
     float baseInitial = 0.0f;
@@ -72,6 +73,11 @@ public class Ship : MonoBehaviour
             FindPrefferedDistance();
             targetUpdateTimer = 0.0f;
         }
+
+        Debug.DrawRay(transform.position, aimDirection, Color.red);
+        Debug.DrawRay(transform.position, velocity, Color.blue);
+
+
     }
 
 
@@ -173,7 +179,24 @@ public class Ship : MonoBehaviour
 
     void AimAtTarget()
     {
-        aimDirection = target.transform.position - transform.position;
+        if(aimWithPrediction)   //  Seems to be not perfect)
+        {
+            float bulletSpeed = projectilePrefab.GetComponent<Projectile>().speed;
+            float disranceToTar = (target.transform.position - transform.position).magnitude;
+            float bulletTime = disranceToTar / bulletSpeed;
+
+            Vector3 targetPos = target.transform.position;
+            Vector3 targetSpeed = target.GetComponent<Ship>().velocity;
+            Vector3 newTargetPos = targetPos + targetSpeed * bulletTime;
+
+            Debug.Log("Bullet speed " + bulletSpeed + "; time " + bulletTime + "; distance " + disranceToTar + ";\naim to " + newTargetPos);
+
+            aimDirection = newTargetPos - transform.position;
+        }
+        else
+        {
+            aimDirection = target.transform.position - transform.position;
+        }
     }
 
     void Shoot()
