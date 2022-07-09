@@ -23,7 +23,7 @@ public class GameManager : MonoBehaviour
     public int numTeams;
     public List<Team> teams;
 
-    bool isBattle = true;
+    [HideInInspector] public bool isBattle = true;
 
 
     void Start()

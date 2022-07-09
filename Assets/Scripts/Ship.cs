@@ -19,8 +19,8 @@ public class Ship : MonoBehaviour
     [SerializeField] bool aimWithPrediction = true;
 
     [SerializeField] float preferredDistance = 20.0f;
-    float baseInitial = 0.0f;
-    float preferredGap = 5.0f;
+    float basePreferred = 0.0f;
+    [SerializeField] float preferredGap = 5.0f;
 
     //  Movement
     public float acceleration = 2.0f;
@@ -32,6 +32,9 @@ public class Ship : MonoBehaviour
     float healthInnitial = 0.0f;
     bool isAlive = true;
 
+    //  Player controls
+    [HideInInspector] public bool isPlayer = false;
+
     void Start()
     {
         allies = GameManager.gameManager.teams[teamID];         //  Remember your team
@@ -41,8 +44,10 @@ public class Ship : MonoBehaviour
 
         //  TO DO       add new team automatically when there's none
 
+        RandomizeStats();
+
         healthInnitial = health;
-        baseInitial = preferredDistance;
+        basePreferred = preferredDistance;
 
         velocity = new Vector3(0.0f, 0.0f, 0.0f);
 
@@ -51,27 +56,43 @@ public class Ship : MonoBehaviour
         FindTarget();
     }
 
-    float targetUpdateTimer = 0.0f;
+    void RandomizeStats()   //  This function is needed to desync ships stats and make game more dynamic
+    {
+        //  All values are randomly shifted within +-5% range
+        preferredDistance += Random.Range(preferredDistance * -0.05f, preferredDistance * 0.05f);
+        preferredGap += Random.Range(preferredGap * -0.05f, preferredGap * 0.05f);
+        fireRate += Random.Range(fireRate * -0.05f, fireRate * 0.05f);
+        maxSpeed += Random.Range(maxSpeed * -0.05f, maxSpeed * 0.05f);
+        acceleration += Random.Range(acceleration * -0.05f, acceleration * 0.05f);
+        fireRate += Random.Range(fireRate * -0.05f, fireRate * 0.05f);
+        targetUpdateTimer += Random.Range(targetUpdateTimer * -0.05f, targetUpdateTimer * 0.05f);
+    }
+
+    float shipUpdateTimer = 0.0f;
+    float targetUpdateTimer = 1.0f;
     void Update()
     {
         try
         {
             Movement();
-            Shooting();
+            if(target && GameManager.gameManager.isBattle)
+            {
+                Shooting();
+            }
         }
         catch   //  Needed cuz sometimes ship fail to find a target on the first frame
         {
             Debug.LogWarning("Ship scipped an update due to an unknown bug");
         }
 
-        
 
-        targetUpdateTimer += Time.deltaTime;
-        if(targetUpdateTimer >= 1.0f)
+
+        shipUpdateTimer += Time.deltaTime;
+        if(shipUpdateTimer >= targetUpdateTimer && GameManager.gameManager.isBattle)
         {
             FindTarget();
             FindPrefferedDistance();
-            targetUpdateTimer = 0.0f;
+            shipUpdateTimer = 0.0f;
         }
 
         Debug.DrawRay(transform.position, aimDirection, Color.red);
@@ -85,11 +106,11 @@ public class Ship : MonoBehaviour
     void Movement()
     {
         //Wander();
-        if(distanceToTarget > preferredDistance + preferredGap)
+        if(distanceToTarget > preferredDistance + preferredGap && target)
         {
             MoveTowards(target);
         }
-        else if (distanceToTarget < preferredDistance - preferredGap)
+        else if (distanceToTarget < preferredDistance - preferredGap && target)
         {
             MoveFrom(target);
         }
@@ -100,7 +121,7 @@ public class Ship : MonoBehaviour
 
         velocity -= velocity / 60 * Time.deltaTime;                 //  Ships slow down like there's air friction (I know there's no air in space)
 
-        velocity -= transform.position / 60.0f * Time.deltaTime;    //  All ships are slightly attracted to the world center
+        velocity -= transform.position / 180.0f * Time.deltaTime;    //  All ships are slightly attracted to the world center
 
         if (velocity.magnitude > maxSpeed)                          //  Limiting speed
             velocity = velocity.normalized * maxSpeed;
@@ -132,10 +153,13 @@ public class Ship : MonoBehaviour
 
     void FindPrefferedDistance()
     {
-        preferredDistance = baseInitial + (healthInnitial - health) * 0.1f;    //  Ship will try to stay further if looses hp
+        preferredDistance = basePreferred + (healthInnitial - health) * 0.1f;    //  Ship will try to stay further if looses hp
 
-        baseInitial -= 0.1f;    //  The function is called once every second
-                                //  this means that ships will tend to get closer with time (1m / 10sec)
+        if (preferredDistance < preferredGap + 1.0f)    //  Shouldn't bee too close
+            preferredDistance = preferredGap + 1.0f;
+
+        basePreferred -= preferredDistance / 120;    //  The function is called once every second
+                                            //  this means that ships will tend to get closer with time (1m / 10sec)
     }
 
     void Shooting()
@@ -171,10 +195,13 @@ public class Ship : MonoBehaviour
             }
         }
 
-        distanceToTarget = Vector3.Distance(transform.position, target.transform.position);
 
         if (!target)
             Debug.LogWarning("Ship couldn't find a target");
+        else
+        {
+            distanceToTarget = Vector3.Distance(transform.position, target.transform.position);
+        }
     }
 
     void AimAtTarget()
@@ -189,7 +216,7 @@ public class Ship : MonoBehaviour
             Vector3 targetSpeed = target.GetComponent<Ship>().velocity;
             Vector3 newTargetPos = targetPos + targetSpeed * bulletTime;
 
-            Debug.Log("Bullet speed " + bulletSpeed + "; time " + bulletTime + "; distance " + disranceToTar + ";\naim to " + newTargetPos);
+            //Debug.Log("Bullet speed " + bulletSpeed + "; time " + bulletTime + "; distance " + disranceToTar + ";\naim to " + newTargetPos);
 
             aimDirection = newTargetPos - transform.position;
         }
@@ -203,8 +230,16 @@ public class Ship : MonoBehaviour
     {
         GameObject proj = Instantiate(projectilePrefab, transform.position, Quaternion.identity);
         Projectile p = proj.GetComponent<Projectile>();
-        Vector3 shootVec = aimDirection.normalized * p.speed + velocity;    //  Applying speed and adding momentum
-        p.SetSpeed(shootVec);
+        if(isPlayer)
+        {
+            Vector3 shootVec = aimDirection.normalized * p.speed + velocity;    //  Applying speed and adding momentum
+            p.SetSpeed(shootVec);
+        }
+        else
+        {
+            Vector3 shootVec = aimDirection.normalized * p.speed;    //  No momentum used for AI 
+            p.SetSpeed(shootVec);
+        }
     }
 
     public void GetDamage(float dmg)
