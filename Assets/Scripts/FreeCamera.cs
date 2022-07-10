@@ -26,6 +26,9 @@ public class FreeCamera : MonoBehaviour
 
     Vector3 speed;
 
+    [HideInInspector] bool isControlling = false;
+    Ship controlledShip = null;
+
     private void Start()
     {
         speed = new Vector3(0.0f, 0.0f, 0.0f);
@@ -66,5 +69,37 @@ public class FreeCamera : MonoBehaviour
         speed -= speed.normalized * brakingForce * Time.deltaTime;  //  Slowing down with time
 
         this.transform.position += speed * Time.deltaTime;
+
+        //  Other keys
+        if(Input.GetKeyDown("f"))
+        {
+            TryToControl();
+        }
+    }
+
+    void TryToControl()
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(transform.position, playerCamera.transform.TransformDirection(Vector3.forward), out hit, 20.0f))
+        {
+            controlledShip = hit.transform.GetComponent<Ship>();
+
+            isControlling = true;
+            controlledShip.isPlayer = true;
+
+            transform.SetParent(controlledShip.gameObject.transform);
+            transform.localPosition = new Vector3(0, 1, -1);
+            transform.localRotation = Quaternion.identity;
+        }
+        else
+        {
+            isControlling = false;
+            controlledShip.isPlayer = false;
+
+            controlledShip = null;
+
+            transform.SetParent(null);
+
+        }
     }
 }
